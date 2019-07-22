@@ -2,7 +2,7 @@ from unittest.mock import patch, call
 from datetime import datetime
 import pytest
 from auth import get_auth_code, gen_access_token, get_access_token, \
-                 calc_token_expiration_datetime
+                 calc_token_expiration_datetime, validate_client_secrets_dict
 
 # Get auth code tests
 
@@ -12,15 +12,14 @@ def empty_dict():
                    "client_secret": None}
     return empty_dict
 
-def test_get_auth_code_bad_input_type():
-    """function expects dict containing client_id & cliend_secret"""
-    with pytest.raises(TypeError):
-        get_auth_code(list())
-
-def test_get_auth_code_no_id(empty_dict):
-    """get auth needs client id to exist in secrets.json"""
-    with pytest.raises(ValueError):
-        get_auth_code(empty_dict)
+@pytest.fixture
+def good_secrets_dict():
+    good_secrets_dict = { "client_id": "Meryl",
+                          "client_secret": "BigLittleLies",
+                          "access_token": "token",
+                          "refresh_token": "refresh",
+                          "expires_at": "2019-01-01 10:10:10"}
+    return good_secrets_dict
 
 @patch('builtins.input', return_value=None)
 def test_get_auth_code_no_code_input(input_mock):
@@ -33,15 +32,31 @@ def test_get_auth_code_no_code_input(input_mock):
 
 # Generate access token unit tests
 
-def test_gen_access_token_bad_input_type():
-    '''get access toekn expects dict input'''
-    with pytest.raises(TypeError):
-        gen_access_token(list(), "test_auth_code")
-
-def test_gen_access_token_no_secret(empty_dict):
-    '''get auth needs client id to exist in secrets.json'''
+def test_gen_access_token_no_auth_code(good_secrets_dict):
+    '''fn needs auth code to gen access token'''
     with pytest.raises(ValueError):
-        gen_access_token(empty_dict, "test_auth_code")
+        gen_access_token(good_secrets_dict, None)
+
+
+# validate secrets dict tests
+# replaces individual get_auth_code & gen_access_token
+# type/value error tests
+
+def test_validate_client_secrets_dict_bad_input_type():
+    ''' Secrets dict should be a dict, derp!'''
+    with pytest.raises(TypeError):
+        validate_client_secrets_dict(list())
+
+def test_validate_client_secrets_dict_no_id(empty_dict):
+    ''' secrets dict needs client_id value '''
+    with pytest.raises(ValueError):
+        validate_client_secrets_dict(empty_dict)
+
+def test_validate_client_secrets_dict_no_secret(empty_dict):
+    ''' secrets dict needs client_secret value '''
+    with pytest.raises(ValueError):
+        validate_client_secrets_dict(empty_dict)
+
 
 
 # Get access token tests

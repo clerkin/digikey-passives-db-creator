@@ -29,7 +29,9 @@ def get_auth_code(secrets_dict, callback_uri=default_callback_uri):
 
 def gen_access_token(secrets_dict, auth_code, callback_uri=default_callback_uri):
     """Get access token from digikey api"""
-
+    if auth_code is None:
+        raise ValueError("auth_code cannot be None!")
+    
     validate_client_secrets_dict(secrets_dict)
     client_id = secrets_dict["client_id"]   
     client_secret = secrets_dict["client_secret"]
@@ -89,9 +91,13 @@ def get_access_token(secrets_dict):
 # for now() was perventing other uses of
 # datetime methods
 def get_now():
+    ''' Returns current datetime UTC'''
     return datetime.datetime.now()
 
 def str_to_datetime(str):
+    ''' Fn returns datetime object from datetime string
+        stored in secrets.json
+        datetime string format "%Y-%m-%d %I:%M:%S" '''
     return datetime.datetime.strptime(str, "%Y-%m-%d %I:%M:%S")
     
 def validate_client_secrets_dict(secrets_dict):
