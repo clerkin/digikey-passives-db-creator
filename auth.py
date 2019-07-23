@@ -1,5 +1,11 @@
 """oauth2.0 for DigiKey API"""
 
+"""
+    TODO: fix secrets.json sotrage format for datetime remove uS
+    TODO: Fix indentation of storing secrets.json
+    TODO: Add better error catching for secrets.json (dont write broken json if fails) 
+    MISC: Determine better soln for time zone of expiration time """
+
 import requests, json
 import datetime
 from helpers.json_config_utils import dict_to_json_file
@@ -58,7 +64,7 @@ def gen_access_token(secrets_dict, auth_code, callback_uri=default_callback_uri)
 
     secrets_dict['access_token'] = access_token
     secrets_dict['refresh_token'] = refresh_token
-    secrets_dict['expires_at'] = expires_at_datetime
+    secrets_dict['expires_at'] = datetime_to_str(expires_at_datetime)
 
     dict_to_json_file(secrets_dict, "secrets.json")
 
@@ -97,8 +103,12 @@ def get_now():
 def str_to_datetime(str):
     ''' Fn returns datetime object from datetime string
         stored in secrets.json
-        datetime string format "%Y-%m-%d %I:%M:%S" '''
-    return datetime.datetime.strptime(str, "%Y-%m-%d %I:%M:%S")
+        datetime string format "%Y-%m-%d %H:%M:%S" '''
+    return datetime.datetime.strptime(str, "%Y-%m-%d %H:%M:%S")
+
+def datetime_to_str(dt):
+    if isinstance(dt, datetime.datetime):
+        return dt.strftime(dt, "%Y-%m-%d %H:%M:%S")
     
 def validate_client_secrets_dict(secrets_dict):
     '''Validate that serects dict is in fact a dict and has
