@@ -1,14 +1,14 @@
 """oauth2.0 for DigiKey API"""
 
 """
-    TODO: fix secrets.json sotrage format for datetime remove uS
-    TODO: Fix indentation of storing secrets.json
     TODO: Add better error catching for secrets.json (dont write broken json if fails) 
     MISC: Determine better soln for time zone of expiration time """
 
 import requests, json
 import datetime
-from helpers.json_config_utils import dict_to_json_file
+from helpers.json_config_utils import dict_to_json_file, json_file_to_dict
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 authorize_url = "https://sso.digikey.com/as/authorization.oauth2"
 token_url = "https://sso.digikey.com/as/token.oauth2"
@@ -46,6 +46,7 @@ def gen_access_token(secrets_dict, auth_code, callback_uri=default_callback_uri)
             'code': auth_code,     
             'redirect_uri': callback_uri}
     print("requesting access token")
+    #TODO: catch bad requests return values
     try:
         access_token_response = requests.post(token_url, 
                                               data=data, 
@@ -55,6 +56,7 @@ def gen_access_token(secrets_dict, auth_code, callback_uri=default_callback_uri)
     except Exception as ex:
         raise ex
 
+    # add better error handling here
     tokens = json.loads(access_token_response.text)
     access_token = tokens['access_token']
     refresh_token = tokens['refresh_token']
@@ -66,6 +68,7 @@ def gen_access_token(secrets_dict, auth_code, callback_uri=default_callback_uri)
     secrets_dict['refresh_token'] = refresh_token
     secrets_dict['expires_at'] = datetime_to_str(expires_at_datetime)
 
+    # reminder, dict's are mutable
     dict_to_json_file(secrets_dict, "secrets.json")
 
 
@@ -92,6 +95,11 @@ def get_access_token(secrets_dict):
     gen_access_token(secrets_dict, auth_code)
     return secrets_dict['access_token']
 
+def get_client_id(secrets_dict):
+    ''' Helper to get client id '''
+    validate_client_secrets_dict(secrets_dict)
+    return secrets_dict["client_id"]
+
 # get now function to enable easier testing
 # mocking auth.datetime.datetime preventing
 # for now() was perventing other uses of
@@ -108,7 +116,7 @@ def str_to_datetime(str):
 
 def datetime_to_str(dt):
     if isinstance(dt, datetime.datetime):
-        return dt.strftime(dt, "%Y-%m-%d %H:%M:%S")
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
     
 def validate_client_secrets_dict(secrets_dict):
     '''Validate that serects dict is in fact a dict and has
@@ -136,7 +144,3 @@ def calc_token_expiration_datetime(expires_in):
 def digikey_secrets_converter(obj):
     if isinstance(obj, datetime.datetime):
         return obj.__str__()
-
-    
-
-# Fn to check if valid access code already exists

@@ -15,6 +15,7 @@ def json_file_to_dict(input_file_name):
     else:
         return return_dict
 
+# TODO: Add way to validate input dict against some schema (python-jsonschema)
 def dict_to_json_file(dict, output_file_name, indent=4):
     with open(output_file_name, "w") as jsonFile:
-        json.dump(dict, jsonFile, indent)
+        json.dump(dict, jsonFile, indent=indent)
